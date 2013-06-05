@@ -1,1 +1,13 @@
+.classpath
+.project
+.settings
+.DS_Store
+dependency-reduced-pom.xml
 target/
+*.iml
+*.ipr
+bin/
+/*/src/main/java/META-INF
+.gitignore.swp
+docs/reference/src/main/docbook/en-US/version_info.xml
+velocity.log
