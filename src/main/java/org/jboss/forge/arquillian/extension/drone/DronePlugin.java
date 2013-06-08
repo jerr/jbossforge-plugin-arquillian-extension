@@ -10,11 +10,14 @@ import org.jboss.forge.parser.JavaParser;
 import org.jboss.forge.parser.java.Field;
 import org.jboss.forge.parser.java.JavaClass;
 import org.jboss.forge.parser.java.Method;
+import org.jboss.forge.parser.xml.Node;
+import org.jboss.forge.parser.xml.XMLParser;
 import org.jboss.forge.project.Project;
 import org.jboss.forge.project.facets.JavaSourceFacet;
 import org.jboss.forge.project.facets.ResourceFacet;
 import org.jboss.forge.project.facets.events.InstallFacets;
 import org.jboss.forge.resources.DirectoryResource;
+import org.jboss.forge.resources.FileResource;
 import org.jboss.forge.resources.Resource;
 import org.jboss.forge.resources.java.JavaResource;
 import org.jboss.forge.shell.PromptType;
@@ -74,6 +77,60 @@ public class DronePlugin implements Plugin
       }
    }
 
+   @Command(value = "configure-webdriver")
+   public void configureWebdriver(
+            @Option(name = "browserCapabilities",
+                     description = "Determines which browser instance is created for WebDriver testing. Default value is htmlUnit.",
+                     defaultValue = "htmlUnit") final BrowserType browserCapabilities,
+            //@Option(name = "iePort", description = "Default port where to connect for Internet Explorer driver.") int iePort,
+            @Option(name = "remoteAddress", description = "Default address for remote driver to connect. Default value is http://localhost:14444/wd/hub") String remoteAddress,
+            @Option(name = "chromeDriverBinary", description = "Path to chromedriver binary") String chromeDriverBinary,
+            @Option(name = "firefoxExtensions", description = "Path or multiple paths to xpi files that will be installed into Firefox instance as extensions. Separate paths using space, use quotes in case that path contains spaces.") String firefoxExtensions,
+            final PipeOut out)
+            throws Exception
+   {
+
+      ResourceFacet resources = project.getFacet(ResourceFacet.class);
+      FileResource<?> resource = (FileResource<?>) resources.getTestResourceFolder().getChild("arquillian.xml");
+
+      Node xml = null;
+      if (!resource.exists())
+      {
+         ShellMessages.error(shell, "Cannot edit '" + resource.getFullyQualifiedName()
+                  + "': No such resource exists");
+         return;
+      }
+      else
+      {
+         xml = XMLParser.parse(resource.getResourceInputStream());
+      }
+
+      addPropertyToArquillianConfig(xml, "webdriver", "browserCapabilities", browserCapabilities!=null?browserCapabilities.name():null);
+      //addPropertyToArquillianConfig(xml, "webdriver", "iePort", iePort != 0 ? String.valueOf(iePort) : null);
+      addPropertyToArquillianConfig(xml, "webdriver", "remoteAddress", remoteAddress);
+      addPropertyToArquillianConfig(xml, "webdriver", "chromeDriverBinary", chromeDriverBinary);
+      addPropertyToArquillianConfig(xml, "webdriver", "firefoxExtensions", firefoxExtensions);
+
+      resource.setContents(XMLParser.toXMLString(xml));
+   }
+
+   private void addPropertyToArquillianConfig(Node xml, String qualifier, String key, String value)
+   {
+      if (value != null)
+      {
+         xml.getOrCreate("extension@qualifier=" + qualifier)
+                  .getOrCreate("property@name=" + key)
+                  .text(value);
+      }
+      else
+      {
+         if (xml.getOrCreate("extension@qualifier=" + qualifier).getSingle("property@name=" + key) != null)
+         {
+            xml.getOrCreate("extension@qualifier=" + qualifier).removeChild("property@name=" + key);
+         }
+      }
+   }
+
    @Command(value = "create-test", help = "Create a new test class with a default @Deployment method")
    public void createTest(
             @Option(required = false,
@@ -92,10 +149,10 @@ public class DronePlugin implements Plugin
       }
 
       String testPackage;
-      
+
       JavaSourceFacet java = project.getFacet(JavaSourceFacet.class);
       ResourceFacet resource = project.getFacet(ResourceFacet.class);
-      
+
       if ((packageName != null) && !"".equals(packageName))
       {
          testPackage = packageName;
@@ -123,31 +180,35 @@ public class DronePlugin implements Plugin
       testClass.addImport("org.junit.Test");
       testClass.addImport("org.junit.runner.RunWith");
       testClass.addImport("org.openqa.selenium.WebDriver");
-      
-      String basePackage = project.getFacet(JavaSourceFacet.class).getBasePackage();  
-  
+
+      testClass.addAnnotation("RunWith").setLiteralValue("Arquillian.class");
+      String basePackage = project.getFacet(JavaSourceFacet.class).getBasePackage();
+
       Field<JavaClass> webappsrc = testClass.addField();
-      webappsrc.setName("WEBAPP_SRC").setPrivate().setStatic(true).setType(String.class).setLiteralInitializer("\"src/main/webapp\"");
+      webappsrc.setName("WEBAPP_SRC").setPrivate().setStatic(true).setType(String.class)
+               .setLiteralInitializer("\"src/main/webapp\"");
 
       Field<JavaClass> browser = testClass.addField();
       browser.setName("browser").setPrivate().setType("WebDriver");
       browser.addAnnotation("Drone");
-      
+
       Field<JavaClass> baseUrl = testClass.addField();
       baseUrl.setName("baseUrl").setPrivate().setType(URL.class);
       baseUrl.addAnnotation("ArquillianResource");
-      
-      Method<JavaClass> createDeployment = testClass.addMethod().setName("createDeployment").setStatic(true).setPublic();
+
+      Method<JavaClass> createDeployment = testClass.addMethod().setName("createDeployment").setStatic(true)
+               .setPublic();
       createDeployment.setReturnType("WebArchive");
       createDeployment.addAnnotation("Deployment").setLiteralValue("testable", "false");
       StringBuilder body = new StringBuilder();
-      
+
       body.append("return ShrinkWrap.create(WebArchive.class,\"").append(name.toLowerCase()).append(".war\")");
       body.append("               .addPackages(true, \"").append(basePackage).append("\")\n");
-      List<Resource<?>> resources =  resource.getResourceFolder().getChild("META-INF").listResources();
+      List<Resource<?>> resources = resource.getResourceFolder().getChild("META-INF").listResources();
       for (Resource<?> file : resources)
       {
-         body.append("               .addAsResource(\"META-INF/").append(file.getName()).append("\", \"META-INF/").append(file.getName()).append("\")");
+         body.append("               .addAsResource(\"META-INF/").append(file.getName()).append("\", \"META-INF/")
+                  .append(file.getName()).append("\")");
       }
       body.append("               .as(ExplodedImporter.class).importDirectory(WEBAPP_SRC).as(WebArchive.class);");
 
@@ -156,7 +217,7 @@ public class DronePlugin implements Plugin
       Method<JavaClass> testIsDeployed = testClass.addMethod().setName("testIsDeployed").setStatic(false).setPublic();
       testIsDeployed.addAnnotation("org.junit.Test");
       testIsDeployed.setBody("browser.navigate().to(baseUrl);");
-      
+
       JavaResource javaFileLocation = java.saveTestJavaSource(testClass);
 
       shell.println("Created Test [" + testClass.getQualifiedName() + "]");
