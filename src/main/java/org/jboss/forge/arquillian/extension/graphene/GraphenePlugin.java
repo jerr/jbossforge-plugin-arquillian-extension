@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
-import org.apache.commons.lang.StringUtils;
 import org.jboss.forge.arquillian.extension.drone.DroneFacet;
 import org.jboss.forge.parser.JavaParser;
 import org.jboss.forge.parser.java.Annotation;
@@ -87,7 +86,7 @@ public class GraphenePlugin implements Plugin
             final PipeOut out)
             throws Exception
    {
-      if (!StringUtils.endsWith(name, "Page"))
+      if (!name.endsWith("Page"))
       {
          name = name + "Page";
       }
@@ -121,11 +120,7 @@ public class GraphenePlugin implements Plugin
       JavaResource javaFileLocation = java.saveTestJavaSource(javaClass);
 
       shell.println("Created Page [" + javaClass.getQualifiedName() + "]");
-
-      /**
-       * Pick up the generated resource.
-       */
-      shell.execute("pick-up " + javaFileLocation.getFullyQualifiedName().replace(" ", "\\ "));
+      pickup.fire(new PickupResource(javaFileLocation));
    }
 
    @Command(value = "new-element", help = "Create a new graphene page class")

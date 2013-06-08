@@ -1,22 +1,22 @@
 package org.jboss.forge.arquillian.extension.drone;
 
-import java.io.FileNotFoundException;
-import java.io.StringWriter;
-import java.util.Properties;
+import java.net.URL;
+import java.util.List;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
 import org.jboss.forge.parser.JavaParser;
+import org.jboss.forge.parser.java.Field;
 import org.jboss.forge.parser.java.JavaClass;
+import org.jboss.forge.parser.java.Method;
 import org.jboss.forge.project.Project;
 import org.jboss.forge.project.facets.JavaSourceFacet;
+import org.jboss.forge.project.facets.ResourceFacet;
 import org.jboss.forge.project.facets.events.InstallFacets;
 import org.jboss.forge.resources.DirectoryResource;
 import org.jboss.forge.resources.Resource;
+import org.jboss.forge.resources.java.JavaResource;
 import org.jboss.forge.shell.PromptType;
 import org.jboss.forge.shell.Shell;
 import org.jboss.forge.shell.ShellMessages;
@@ -38,20 +38,11 @@ import org.jboss.forge.shell.util.ResourceUtil;
  * 
  */
 @Alias("arq-drone")
-@RequiresFacet({ JavaSourceFacet.class, DroneFacet.class })
+@RequiresFacet({ JavaSourceFacet.class, ResourceFacet.class, DroneFacet.class })
 @RequiresProject
 @Help("A plugin that helps setting up Arquillian Drone extension")
 public class DronePlugin implements Plugin
 {
-
-   static {
-       Properties properties = new Properties();
-       properties.setProperty("resource.loader", "class");
-       properties.setProperty("class.resource.loader.class",
-               "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
-
-       Velocity.init(properties);
-   }
 
    @Inject
    private Project project;
@@ -93,15 +84,18 @@ public class DronePlugin implements Plugin
             @Option(required = true, name = "named", help = "the test class name") String name,
             @Option(name = "enableJPA", required = false, flagOnly = true) boolean enableJPA,
             final PipeOut out)
-            throws FileNotFoundException
+            throws Exception
    {
-      if (!StringUtils.endsWith(name, "Test"))
+      if (!name.endsWith("Test"))
       {
          name = name + "Test";
       }
 
       String testPackage;
+      
       JavaSourceFacet java = project.getFacet(JavaSourceFacet.class);
+      ResourceFacet resource = project.getFacet(ResourceFacet.class);
+      
       if ((packageName != null) && !"".equals(packageName))
       {
          testPackage = packageName;
@@ -114,25 +108,59 @@ public class DronePlugin implements Plugin
       {
          testPackage = shell.promptCommon(
                   "In which package you'd like to create this Test class, or enter for default",
-                  PromptType.JAVA_PACKAGE, java.getBasePackage());
+                  PromptType.JAVA_PACKAGE, java.getBasePackage() + ".view");
       }
       JavaClass testClass = JavaParser.create(JavaClass.class).setName(name).setPackage(testPackage);
-
-      String basePackage = project.getFacet(JavaSourceFacet.class).getBasePackage();
+      testClass.addImport("java.net.URL");
+      testClass.addImport("org.jboss.arquillian.container.test.api.Deployment");
+      testClass.addImport("org.jboss.arquillian.drone.api.annotation.Drone");
+      testClass.addImport("org.jboss.arquillian.graphene.spi.annotations.Page");
+      testClass.addImport("org.jboss.arquillian.junit.Arquillian");
+      testClass.addImport("org.jboss.arquillian.test.api.ArquillianResource");
+      testClass.addImport("org.jboss.shrinkwrap.api.ShrinkWrap");
+      testClass.addImport("org.jboss.shrinkwrap.api.importer.ExplodedImporter");
+      testClass.addImport("org.jboss.shrinkwrap.api.spec.WebArchive");
+      testClass.addImport("org.junit.Test");
+      testClass.addImport("org.junit.runner.RunWith");
+      testClass.addImport("org.openqa.selenium.WebDriver");
       
-      VelocityContext context = new VelocityContext();
-      context.put("package", testClass.getPackage());
-      context.put("testName", testClass.getName());
-      context.put("basePackage", basePackage);
-      context.put("enableJPA", enableJPA);
+      String basePackage = project.getFacet(JavaSourceFacet.class).getBasePackage();  
+  
+      Field<JavaClass> webappsrc = testClass.addField();
+      webappsrc.setName("WEBAPP_SRC").setPrivate().setStatic(true).setType(String.class).setLiteralInitializer("\"src/main/webapp\"");
 
-      StringWriter writer = new StringWriter();
-      Velocity.mergeTemplate( "drone/TemplateTest.vtl", "UTF-8", context, writer);
+      Field<JavaClass> browser = testClass.addField();
+      browser.setName("browser").setPrivate().setType("WebDriver");
+      browser.addAnnotation("Drone");
+      
+      Field<JavaClass> baseUrl = testClass.addField();
+      baseUrl.setName("baseUrl").setPrivate().setType(URL.class);
+      baseUrl.addAnnotation("ArquillianResource");
+      
+      Method<JavaClass> createDeployment = testClass.addMethod().setName("createDeployment").setStatic(true).setPublic();
+      createDeployment.setReturnType("WebArchive");
+      createDeployment.addAnnotation("Deployment").setLiteralValue("testable", "false");
+      StringBuilder body = new StringBuilder();
+      
+      body.append("return ShrinkWrap.create(WebArchive.class,\"").append(name.toLowerCase()).append(".war\")");
+      body.append("               .addPackages(true, \"").append(basePackage).append("\")\n");
+      List<Resource<?>> resources =  resource.getResourceFolder().getChild("META-INF").listResources();
+      for (Resource<?> file : resources)
+      {
+         body.append("               .addAsResource(\"META-INF/").append(file.getName()).append("\", \"META-INF/").append(file.getName()).append("\")");
+      }
+      body.append("               .as(ExplodedImporter.class).importDirectory(WEBAPP_SRC).as(WebArchive.class);");
 
-      testClass = JavaParser.parse(JavaClass.class, writer.toString());
-      java.saveTestJavaSource(testClass);
+      createDeployment.setBody(body.toString());
 
-      pickup.fire(new PickupResource(java.getTestJavaResource(testClass)));
+      Method<JavaClass> testIsDeployed = testClass.addMethod().setName("testIsDeployed").setStatic(false).setPublic();
+      testIsDeployed.addAnnotation("org.junit.Test");
+      testIsDeployed.setBody("browser.navigate().to(baseUrl);");
+      
+      JavaResource javaFileLocation = java.saveTestJavaSource(testClass);
+
+      shell.println("Created Test [" + testClass.getQualifiedName() + "]");
+      pickup.fire(new PickupResource(javaFileLocation));
    }
 
    /**
