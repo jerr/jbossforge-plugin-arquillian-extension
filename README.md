@@ -4,9 +4,10 @@
 
 # Installation
  
-The Portlet plugin is not yet listed in the Forge plugin repository. You need to use the git url to install it. In Forge type: 
-	
-	forge git-plugin git://github.com/jerr/jbossforge-plugin-arquillian-extension.git
+The Arquillian Extension plugin is listed in the Forge plugin repository so installation is trivial. 
+In Forge type: 
+
+	forge install-plugin arquillian-extension
 
 That's it! The plugin will be downloaded from the git repository, compiled and installed.
 
