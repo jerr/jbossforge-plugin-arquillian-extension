@@ -106,7 +106,6 @@ public class DronePlugin implements Plugin
       }
 
       addPropertyToArquillianConfig(xml, "webdriver", "browserCapabilities", browserCapabilities!=null?browserCapabilities.name():null);
-      //addPropertyToArquillianConfig(xml, "webdriver", "iePort", iePort != 0 ? String.valueOf(iePort) : null);
       addPropertyToArquillianConfig(xml, "webdriver", "remoteAddress", remoteAddress);
       addPropertyToArquillianConfig(xml, "webdriver", "chromeDriverBinary", chromeDriverBinary);
       addPropertyToArquillianConfig(xml, "webdriver", "firefoxExtensions", firefoxExtensions);
@@ -139,7 +138,6 @@ public class DronePlugin implements Plugin
                      type = PromptType.JAVA_PACKAGE,
                      name = "package") final String packageName,
             @Option(required = true, name = "named", help = "the test class name") String name,
-            @Option(name = "enableJPA", required = false, flagOnly = true) boolean enableJPA,
             final PipeOut out)
             throws Exception
    {

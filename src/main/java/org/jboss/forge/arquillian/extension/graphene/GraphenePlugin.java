@@ -11,6 +11,7 @@ import org.jboss.forge.parser.java.Annotation;
 import org.jboss.forge.parser.java.Field;
 import org.jboss.forge.parser.java.JavaClass;
 import org.jboss.forge.parser.java.JavaSource;
+import org.jboss.forge.parser.java.util.Strings;
 import org.jboss.forge.project.Project;
 import org.jboss.forge.project.facets.JavaSourceFacet;
 import org.jboss.forge.project.facets.events.InstallFacets;
@@ -123,10 +124,11 @@ public class GraphenePlugin implements Plugin
       pickup.fire(new PickupResource(javaFileLocation));
    }
 
-   @Command(value = "new-element", help = "Create a new graphene page class")
+   @Command(value = "new-element", help = "Create a new WebElement in the current class")
    public void newElement(
             @Option(required = true, name = "named", help = "the element name") String name,
-            @Option(required = true, name = "findby", help = "the element name") String findBy,
+            @Option(required = true, name = "findby", help = "the locator name") FindByType findBy,
+            @Option(required = true, name = "value", help = "the locator value") String value,            
             final PipeOut out)
             throws Exception
    {
@@ -136,7 +138,11 @@ public class GraphenePlugin implements Plugin
 
       Field<JavaClass> field = javaClass.addField();
       Annotation<JavaClass> annotation = field.setName(name).setPrivate().setType("org.openqa.selenium.WebElement").addAnnotation("org.openqa.selenium.support.FindBy");
-      annotation.setStringValue(findBy.split("=")[0], findBy.split("=")[1]);
+      annotation.setStringValue(findBy.name(), value);
+      javaClass.addMethod().setReturnType(field.getTypeInspector().toString()).setName("get" + Strings.capitalize(name))
+               .setPublic()
+               .setBody("return this." + name + ";");
+
       java.saveTestJavaSource(javaClass);
 
       shell.println("Created element  [" + field.getName() + "]");
