@@ -169,7 +169,6 @@ public class DronePlugin implements Plugin
       testClass.addImport("java.net.URL");
       testClass.addImport("org.jboss.arquillian.container.test.api.Deployment");
       testClass.addImport("org.jboss.arquillian.drone.api.annotation.Drone");
-      testClass.addImport("org.jboss.arquillian.graphene.spi.annotations.Page");
       testClass.addImport("org.jboss.arquillian.junit.Arquillian");
       testClass.addImport("org.jboss.arquillian.test.api.ArquillianResource");
       testClass.addImport("org.jboss.shrinkwrap.api.ShrinkWrap");
