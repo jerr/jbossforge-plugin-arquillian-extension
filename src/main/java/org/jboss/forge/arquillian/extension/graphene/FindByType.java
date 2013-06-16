@@ -13,5 +13,6 @@ public enum FindByType
    tagName,
    linkText,
    partialLinkText,
-   xpath
+   xpath,
+   jquery
 }
