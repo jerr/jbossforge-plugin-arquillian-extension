@@ -37,6 +37,9 @@ public class DroneFacetImpl extends ArquillianExtensionFacet implements DroneFac
    @Override
    protected List<Dependency> getRequiredDependencies()
    {
+      // may want to add an exclusion for net.sourceforge.htmlunit:htmlunit by default since it causes conflicts in embedded containers
+      return Arrays.asList((Dependency) DependencyBuilder.create("org.jboss.arquillian.extension:arquillian-drone-webdriver-depchain::test:pom"));
+      /*
       DependencyBuilder seleniumServer = DependencyBuilder.create("org.seleniumhq.selenium:selenium-server::test");
       seleniumServer.getExcludedDependencies().add(DependencyBuilder.create("org.mortbay.jetty:servlet-api-2.5"));
       return Arrays.asList((Dependency) DependencyBuilder.create("org.jboss.arquillian.extension:arquillian-drone-impl::test"),
@@ -46,6 +49,7 @@ public class DroneFacetImpl extends ArquillianExtensionFacet implements DroneFac
                (Dependency) DependencyBuilder.create("org.seleniumhq.selenium:selenium-java::test"),
                (Dependency) seleniumServer,
                (Dependency) DependencyBuilder.create("org.slf4j:slf4j-simple:1.6.4:test"));
+      */
    }
 
 }

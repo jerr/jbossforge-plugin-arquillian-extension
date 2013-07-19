@@ -40,10 +40,10 @@ import org.jboss.forge.shell.util.ResourceUtil;
  * @author Jérémie Lagarde
  * 
  */
-@Alias("arq-drone")
+@Alias("arquillian-drone")
 @RequiresFacet({ JavaSourceFacet.class, ResourceFacet.class, DroneFacet.class })
 @RequiresProject
-@Help("A plugin that helps setting up Arquillian Drone extension")
+@Help("A plugin that helps manage the Arquillian Drone extension")
 public class DronePlugin implements Plugin
 {
 
@@ -73,7 +73,7 @@ public class DronePlugin implements Plugin
       }
       if (project.hasFacet(DroneFacet.class))
       {
-         ShellMessages.success(out, "Drone arquillian extension is installed.");
+         ShellMessages.success(out, "Arquillian Drone extension is installed.");
       }
    }
 

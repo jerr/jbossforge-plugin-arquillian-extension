@@ -153,6 +153,7 @@ public abstract class ArquillianExtensionFacet extends BaseFacet
             return dep;
          }
       }
+      // FIXME this causes ArrayIndexOutOfBoundsException if the list is empty
       return dependencies.get(dependencies.size() - 1);
    }
 
