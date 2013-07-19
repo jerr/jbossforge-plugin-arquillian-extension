@@ -1,4 +1,4 @@
-package org.jboss.forge.arquillian.extension.graphene;
+package org.jboss.forge.arquillian.extension.warp;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,7 +13,7 @@ import org.jboss.forge.shell.Shell;
 import org.jboss.forge.shell.plugins.Alias;
 
 /**
- * @author Jérémie Lagarde
+ * @author Dan Allen, Jérémie Lagarde
  * 
  */
 @Alias("forge.arquillian.extension.warp")
