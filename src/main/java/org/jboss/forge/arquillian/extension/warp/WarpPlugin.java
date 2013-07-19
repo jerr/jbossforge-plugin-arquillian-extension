@@ -1,25 +1,27 @@
-package org.jboss.forge.arquillian.extension.persistence;
+package org.jboss.forge.arquillian.extension.graphene;
 
 import java.io.FileNotFoundException;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
-import org.jboss.forge.arquillian.completers.TestMethodCompleter;
+import org.jboss.forge.arquillian.extension.drone.DroneFacet;
+import org.jboss.forge.parser.JavaParser;
 import org.jboss.forge.parser.java.Annotation;
+import org.jboss.forge.parser.java.Field;
 import org.jboss.forge.parser.java.JavaClass;
 import org.jboss.forge.parser.java.JavaSource;
-import org.jboss.forge.parser.java.Method;
 import org.jboss.forge.parser.java.util.Strings;
 import org.jboss.forge.project.Project;
-import org.jboss.forge.project.dependencies.Dependency;
 import org.jboss.forge.project.facets.JavaSourceFacet;
-import org.jboss.forge.project.facets.ResourceFacet;
 import org.jboss.forge.project.facets.events.InstallFacets;
+import org.jboss.forge.resources.DirectoryResource;
 import org.jboss.forge.resources.Resource;
 import org.jboss.forge.resources.java.JavaResource;
+import org.jboss.forge.shell.PromptType;
 import org.jboss.forge.shell.Shell;
 import org.jboss.forge.shell.ShellMessages;
+import org.jboss.forge.shell.events.PickupResource;
 import org.jboss.forge.shell.plugins.Alias;
 import org.jboss.forge.shell.plugins.Command;
 import org.jboss.forge.shell.plugins.Current;
@@ -30,16 +32,17 @@ import org.jboss.forge.shell.plugins.Plugin;
 import org.jboss.forge.shell.plugins.RequiresFacet;
 import org.jboss.forge.shell.plugins.RequiresProject;
 import org.jboss.forge.shell.plugins.SetupCommand;
+import org.jboss.forge.shell.util.ResourceUtil;
 
 /**
  * @author Jérémie Lagarde
  * 
  */
-@Alias("arquillian-persistence")
-@RequiresFacet({ JavaSourceFacet.class, ResourceFacet.class, PersistenceFacet.class })
+@Alias("arquillian-warp")
+@RequiresFacet({ JavaSourceFacet.class, DroneFacet.class, WarpFacet.class })
 @RequiresProject
-@Help("A plugin that helps manage the Arquillian Persistence extension (APE)")
-public class PersistencePlugin implements Plugin
+@Help("A plugin that helps setting up Arquillian Warp extension")
+public class WarpPlugin implements Plugin
 {
 
    @Inject
@@ -49,9 +52,12 @@ public class PersistencePlugin implements Plugin
    private Event<InstallFacets> request;
 
    @Inject
+   private Event<PickupResource> pickup;
+
+   @Inject
    @Current
    private Resource<?> currentResource;
-
+   
    @Inject
    private Shell shell;
 
@@ -59,45 +65,36 @@ public class PersistencePlugin implements Plugin
    public void setup(final PipeOut out)
    {
 
-      if (!project.hasFacet(PersistenceFacet.class))
+      if (!project.hasFacet(WarpFacet.class))
       {
-         request.fire(new InstallFacets(PersistenceFacet.class));
+         request.fire(new InstallFacets(WarpFacet.class));
       }
-      if (project.hasFacet(PersistenceFacet.class))
+      if (project.hasFacet(WarpFacet.class))
       {
-         ShellMessages.success(out, "Arquillian Persistence extension is installed.");
+         ShellMessages.success(out, "Arquillian Warp extension is installed.");
       }
    }
 
-   @Command(value = "usingDataSet", help = "Adding dataset to a test.")
-   public void newElement(@Option(name = "dataset") String dataset,
-            @Option(name = "test", completer = TestMethodCompleter.class) final String test,
-            final PipeOut out)
-            throws Exception
+   // TODO add command to create Warp test
+
+   /**
+    * Retrieves the package portion of the current directory if it is a package, null otherwise.
+    * 
+    * @return String representation of the current package, or null
+    */
+   private String getPackagePortionOfCurrentDirectory()
    {
-      final JavaSourceFacet java = project.getFacet(JavaSourceFacet.class);
-
-      JavaClass javaClass = getJavaClass();
-
-      if (!javaClass.hasMethodSignature(test))
+      for (DirectoryResource r : project.getFacet(JavaSourceFacet.class).getSourceFolders())
       {
-         throw new IllegalStateException("Class does not have a method named [" + test + "]");
+         final DirectoryResource currentDirectory = shell.getCurrentDirectory();
+         if (ResourceUtil.isChildOf(r, currentDirectory))
+         {
+            // Have to remember to include the last slash so it's not part of the package
+            return currentDirectory.getFullyQualifiedName().replace(r.getFullyQualifiedName() + "/", "")
+                     .replaceAll("/", ".");
+         }
       }
-
-      if (dataset == null)
-      {
-         Resource<?> datasetFile = shell.promptChoiceTyped("What dataset do you want?",
-                  project.getFacet(PersistenceFacet.class).getDataSetFiles());
-         String testResourceFolder = project.getFacet(ResourceFacet.class).getTestResourceFolder().getFullyQualifiedName();
-         dataset = datasetFile.getFullyQualifiedName().substring(testResourceFolder.length() + 1);
-                  
-      }
-      
-      Method<JavaClass> method = javaClass.getMethod(test);
-      Annotation<JavaClass> annotation = method.addAnnotation("org.jboss.arquillian.persistence.UsingDataSet");
-      annotation.setStringValue(dataset);
-      java.saveTestJavaSource(javaClass);
-
+      return null;
    }
 
    private JavaClass getJavaClass() throws FileNotFoundException
@@ -111,6 +108,7 @@ public class PersistencePlugin implements Plugin
       {
          throw new RuntimeException("Current resource is not a JavaResource!");
       }
+
    }
 
    private JavaClass getJavaClassFrom(final Resource<?> resource) throws FileNotFoundException
@@ -122,5 +120,4 @@ public class PersistencePlugin implements Plugin
       }
       return (JavaClass) source;
    }
-
 }

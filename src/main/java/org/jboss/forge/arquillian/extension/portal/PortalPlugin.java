@@ -20,10 +20,10 @@ import org.jboss.forge.shell.plugins.SetupCommand;
  * @author Jérémie Lagarde
  * 
  */
-@Alias("arq-portal")
+@Alias("arquillian-portal")
 @RequiresFacet({ JavaSourceFacet.class, ResourceFacet.class, PortalFacet.class })
 @RequiresProject
-@Help("A plugin that helps setting up Arquillian Portal extension")
+@Help("A plugin that helps manage the Arquillian Portal extension")
 public class PortalPlugin implements Plugin
 {
 
@@ -43,7 +43,7 @@ public class PortalPlugin implements Plugin
       }
       if (project.hasFacet(PortalFacet.class))
       {
-         ShellMessages.success(out, "Portal arquillian extension is installed.");
+         ShellMessages.success(out, "Arquillian Portal extension is installed.");
       }
    }
 }

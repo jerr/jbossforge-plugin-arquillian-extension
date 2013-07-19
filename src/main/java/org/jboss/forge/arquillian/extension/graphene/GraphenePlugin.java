@@ -38,10 +38,10 @@ import org.jboss.forge.shell.util.ResourceUtil;
  * @author Jérémie Lagarde
  * 
  */
-@Alias("arq-graphene")
+@Alias("arquillian-graphene")
 @RequiresFacet({ JavaSourceFacet.class, DroneFacet.class, GrapheneFacet.class })
 @RequiresProject
-@Help("A plugin that helps setting up Arquillian Graphene extension")
+@Help("A plugin that helps manage the Arquillian Graphene extension")
 public class GraphenePlugin implements Plugin
 {
 
@@ -71,11 +71,11 @@ public class GraphenePlugin implements Plugin
       }
       if (project.hasFacet(GrapheneFacet.class))
       {
-         ShellMessages.success(out, "Graphene arquillian extension is installed.");
+         ShellMessages.success(out, "Arquillian Graphene extension is installed.");
       }
    }
 
-   @Command(value = "new-page", help = "Create a new graphene page element class")
+   @Command(value = "new-page", help = "Create a new Graphene page element class")
    public void createTest(
             @Option(required = false,
                      help = "the package in which to build this page class",

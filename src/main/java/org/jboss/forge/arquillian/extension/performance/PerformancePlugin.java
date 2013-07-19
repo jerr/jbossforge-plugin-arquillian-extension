@@ -20,10 +20,10 @@ import org.jboss.forge.shell.plugins.SetupCommand;
  * @author Jérémie Lagarde
  * 
  */
-@Alias("arq-performance")
+@Alias("arquillian-performance")
 @RequiresFacet({ JavaSourceFacet.class, ResourceFacet.class, PerformanceFacet.class })
 @RequiresProject
-@Help("A plugin that helps setting up Arquillian Performance extension")
+@Help("A plugin that helps manage the Arquillian Performance extension")
 public class PerformancePlugin implements Plugin
 {
 
@@ -43,7 +43,7 @@ public class PerformancePlugin implements Plugin
       }
       if (project.hasFacet(PerformanceFacet.class))
       {
-         ShellMessages.success(out, "Performance arquillian extension is installed.");
+         ShellMessages.success(out, "Arquillian Performance extension is installed.");
       }
    }
 }
