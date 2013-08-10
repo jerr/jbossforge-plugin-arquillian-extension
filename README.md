@@ -74,6 +74,18 @@ Test the project :
 	build --profile arq-jboss_as_remote_7.x 
 	as7 shutdown
 
+# Arquillian Droidium Web Commands
+Don't forget to configure Arquillian plugin before using this extension plugin. (arquillian setup)
+* `arquillian-droidium-web setup` - Installs Droidium web plugin
+* `arquillian-droidium create-test` - Creates simple Droidium web test
+* `arquillian-droidium configure-droidium-web` - Configures Droidium web plugin
+
+# Arquillian Droidium Native Commands
+Don't forget to configure Arquillian plugin before using this extension plugin. (arquillian setup)
+* `arquillian-droidium-native setup` - Installs Droidium native plugin
+* `arquillian-droidium create-test` - Creates simple Droidium native test
+* `arquillian-droidium configure-droidium-native` - Configures Droidium native plugin
+
 # Performance Extension Commands
 # Persistence Extension Commands
 # Portal Extension Commands
