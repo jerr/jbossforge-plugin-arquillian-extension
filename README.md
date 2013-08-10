@@ -75,13 +75,13 @@ Test the project :
 	as7 shutdown
 
 # Arquillian Droidium Web Commands
-Don't forget to configure arquillian-droidium-web plugin before using this extension plugin. (arquillian-droidium-web setup)
+Don't forget to configure Arquillian plugin before using this extension plugin. (arquillian setup)
 * `arquillian-droidium-web setup` - Installs Droidium web plugin
 * `arquillian-droidium create-test` - Creates simple Droidium web test
 * `arquillian-droidium configure-droidium-web` - Configures Droidium web plugin
 
 # Arquillian Droidium Native Commands
-Don't forget to configure arquillian-droidium-native plugin before using this extension plugin. (arquillian-droidium-native setup)
+Don't forget to configure Arquillian plugin before using this extension plugin. (arquillian setup)
 * `arquillian-droidium-native setup` - Installs Droidium native plugin
 * `arquillian-droidium create-test` - Creates simple Droidium native test
 * `arquillian-droidium configure-droidium-native` - Configures Droidium native plugin
