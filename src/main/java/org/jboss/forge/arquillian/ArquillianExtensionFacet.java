@@ -14,6 +14,7 @@ import org.jboss.forge.project.facets.ResourceFacet;
 import org.jboss.forge.project.packaging.PackagingType;
 import org.jboss.forge.resources.FileResource;
 import org.jboss.forge.shell.Shell;
+import org.jboss.forge.shell.ShellColor;
 import org.jboss.forge.shell.plugins.RequiresFacet;
 
 /**
@@ -99,6 +100,13 @@ public abstract class ArquillianExtensionFacet extends BaseFacet
             {
                String versionProperty = "version." + dependency.getArtifactId().replaceAll("-", ".");
                List<Dependency> versions = dependencyFacet.resolveAvailableVersions(dependency);
+               if (versions == null || versions.size() == 0)
+               {
+                  shell.println(ShellColor.RED,
+                           "No Version found for " + dependency.getGroupId() + ":" + dependency.getArtifactId()
+                                    + ". Please check your remote repository or install this artifact locally.");
+                  return false;
+               }
                Dependency selectedDependency = shell.promptChoiceTyped("What version of " + dependency.getArtifactId()
                         + " do you want to use?", versions, getLatestNonSnapshotVersion(versions));
 
@@ -141,19 +149,19 @@ public abstract class ArquillianExtensionFacet extends BaseFacet
 
    public static Dependency getLatestNonSnapshotVersion(List<Dependency> dependencies)
    {
-      if (dependencies == null)
+      if (dependencies == null || dependencies.size() == 0)
       {
          return null;
       }
-      for (int i = dependencies.size() - 1; i >= 0; i--)
+      
+      for (Dependency dependency : dependencies)
       {
-         Dependency dep = dependencies.get(i);
-         if (!dep.getVersion().endsWith("SNAPSHOT"))
+         if (!dependency.getVersion().endsWith("SNAPSHOT"))
          {
-            return dep;
+            return dependency;
          }
       }
-      // FIXME this causes ArrayIndexOutOfBoundsException if the list is empty
+      
       return dependencies.get(dependencies.size() - 1);
    }
 
