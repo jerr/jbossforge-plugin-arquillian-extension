@@ -13,7 +13,7 @@ That's it! The plugin will be downloaded from the git repository, compiled and i
 
 # Drone Extension Commands
 Don't forget to configure Arquillian plugin before using this extension plugin. (arquillian setup)
-* `arquillian-drone setup` - Instals Arquillian Drone dependency.
+* `arquillian-drone setup` - Installs Arquillian Extension Drone dependency.
 * `arquillian-drone configure-webdriver` - Configure extension with the webdriver qualifier in the arquillian.xml file.
 	+ `--browserCapabilities` : Determines which browser instance is created for WebDriver testing. Default value is htmlUnit.
 	+ `--remoteAddress` : Default address for remote driver to connect. Default value is http://localhost:14444/wd/hub
@@ -25,7 +25,7 @@ Don't forget to configure Arquillian plugin before using this extension plugin. 
 	
 # Graphene Extension Commands
 Don't forget to configure arquillian-drone plugin before using this extension plugin. (arquillian-drone setup)
-* `arquillian-graphene setup` - Instals Arquillian Graphene dependency.
+* `arquillian-graphene setup` - Installs Arquillian Graphene dependency.
 * `arquillian-graphene new-page` - Create a new graphene page class
 	+ `--package` : the page class package
 	+ `--named` : the page class name
@@ -87,8 +87,19 @@ Don't forget to configure Arquillian plugin before using this extension plugin. 
 * `arquillian-droidium configure-droidium-native` - Configures Droidium native plugin
 
 # Performance Extension Commands
+Don't forget to configure Arquillian plugin before using this extension plugin. (arquillian setup)
+* `arquillian-performance setup` - Installs Arquillian Extension Performance dependency.
+
 # Persistence Extension Commands
+Don't forget to configure Arquillian plugin before using this extension plugin. (arquillian setup)
+* `arquillian-persistence setup` - Installs Arquillian Persistence dependency.
+* `arquillian-persistence usingDataSet` - Adding dataset to a test. 
+	+ `--dataset` : The dataset file.
+	+ `--test` :  The test method of the current test class.
+
 # Portal Extension Commands
+* `arquillian-portal setup` - Installs Arquillian Extension Portal dependency.
+
 # Warp Extension Commands
 Don't forget to configure arquillian-drone plugin before using this extension plugin. (arquillian-drone setup)
-* `arquillian-warp setup` - Instals Arquillian Warp dependency.
+* `arquillian-warp setup` - Installs Arquillian Warp dependency.
