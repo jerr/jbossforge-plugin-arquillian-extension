@@ -6,6 +6,7 @@ import java.util.List;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
+import org.jboss.forge.arquillian.extension.AbstractExtensionPlugin;
 import org.jboss.forge.parser.JavaParser;
 import org.jboss.forge.parser.java.Field;
 import org.jboss.forge.parser.java.JavaClass;
@@ -44,24 +45,8 @@ import org.jboss.forge.shell.util.ResourceUtil;
 @RequiresFacet({ JavaSourceFacet.class, ResourceFacet.class, DroneFacet.class })
 @RequiresProject
 @Help("A plugin that helps manage the Arquillian Drone extension")
-public class DronePlugin implements Plugin
+public class DronePlugin extends AbstractExtensionPlugin
 {
-
-   @Inject
-   private Project project;
-
-   @Inject
-   private Event<InstallFacets> request;
-
-   @Inject
-   private Event<PickupResource> pickup;
-
-   @Inject
-   @Current
-   private Resource<?> currentResource;
-
-   @Inject
-   private Shell shell;
 
    @SetupCommand
    public void setup(final PipeOut out)
@@ -111,23 +96,6 @@ public class DronePlugin implements Plugin
       addPropertyToArquillianConfig(xml, "webdriver", "firefoxExtensions", firefoxExtensions);
 
       resource.setContents(XMLParser.toXMLString(xml));
-   }
-
-   private void addPropertyToArquillianConfig(Node xml, String qualifier, String key, String value)
-   {
-      if (value != null)
-      {
-         xml.getOrCreate("extension@qualifier=" + qualifier)
-                  .getOrCreate("property@name=" + key)
-                  .text(value);
-      }
-      else
-      {
-         if (xml.getOrCreate("extension@qualifier=" + qualifier).getSingle("property@name=" + key) != null)
-         {
-            xml.getOrCreate("extension@qualifier=" + qualifier).removeChild("property@name=" + key);
-         }
-      }
    }
 
    @Command(value = "create-test", help = "Create a new test class with a default @Deployment method")
@@ -219,24 +187,5 @@ public class DronePlugin implements Plugin
 
       shell.println("Created Test [" + testClass.getQualifiedName() + "]");
       pickup.fire(new PickupResource(javaFileLocation));
-   }
-
-   /**
-    * Retrieves the package portion of the current directory if it is a package, null otherwise.
-    * 
-    * @return String representation of the current package, or null
-    */
-   private String getPackagePortionOfCurrentDirectory()
-   {
-      for (DirectoryResource r : project.getFacet(JavaSourceFacet.class).getSourceFolders())
-      {
-         final DirectoryResource currentDirectory = shell.getCurrentDirectory();
-         if (ResourceUtil.isChildOf(r, currentDirectory))
-         {
-            return currentDirectory.getFullyQualifiedName().replace(r.getFullyQualifiedName() + "/", "")
-                     .replaceAll("/", ".");
-         }
-      }
-      return null;
    }
 }

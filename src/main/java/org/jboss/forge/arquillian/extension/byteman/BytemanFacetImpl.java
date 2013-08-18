@@ -34,6 +34,9 @@ public class BytemanFacetImpl extends ArquillianExtensionFacet implements Bytema
    protected List<Dependency> getRequiredDependencies()
    {
       return Arrays.asList((Dependency) DependencyBuilder
-               .create("org.jboss.arquillian.extension:arquillian-extension-byteman::test"));
+               .create("org.jboss.arquillian.extension:arquillian-extension-byteman::test"),
+               (Dependency) DependencyBuilder.create("org.jboss.byteman:byteman::test"),
+               // TODO : reuse ${version.byteman} property for byteman-submit dependency.
+               (Dependency) DependencyBuilder.create("org.jboss.byteman:byteman-submit::test"));
    }
 }

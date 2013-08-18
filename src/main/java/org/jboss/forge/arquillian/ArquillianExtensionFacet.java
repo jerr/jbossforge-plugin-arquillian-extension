@@ -10,12 +10,15 @@ import org.jboss.forge.project.dependencies.DependencyInstaller;
 import org.jboss.forge.project.dependencies.ScopeType;
 import org.jboss.forge.project.facets.BaseFacet;
 import org.jboss.forge.project.facets.DependencyFacet;
+import org.jboss.forge.project.facets.JavaSourceFacet;
 import org.jboss.forge.project.facets.ResourceFacet;
 import org.jboss.forge.project.packaging.PackagingType;
+import org.jboss.forge.resources.DirectoryResource;
 import org.jboss.forge.resources.FileResource;
 import org.jboss.forge.shell.Shell;
 import org.jboss.forge.shell.ShellColor;
 import org.jboss.forge.shell.plugins.RequiresFacet;
+import org.jboss.forge.shell.util.ResourceUtil;
 
 /**
  * A base facet implementation for Facets which require Arquillian configuration to be installed.
@@ -164,5 +167,4 @@ public abstract class ArquillianExtensionFacet extends BaseFacet
       
       return dependencies.get(dependencies.size() - 1);
    }
-
 }

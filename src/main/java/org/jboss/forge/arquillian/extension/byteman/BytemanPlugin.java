@@ -1,25 +1,41 @@
 package org.jboss.forge.arquillian.extension.byteman;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
 
-import org.jboss.forge.arquillian.extension.drone.BrowserType;
+import org.apache.maven.model.Plugin;
+import org.jboss.forge.arquillian.extension.AbstractExtensionPlugin;
 import org.jboss.forge.arquillian.extension.portal.PortalFacet;
+import org.jboss.forge.maven.MavenCoreFacet;
+import org.jboss.forge.maven.MavenPluginFacet;
+import org.jboss.forge.maven.plugins.ConfigurationElement;
+import org.jboss.forge.maven.plugins.ConfigurationElementBuilder;
+import org.jboss.forge.maven.plugins.MavenPlugin;
+import org.jboss.forge.maven.plugins.MavenPluginBuilder;
+import org.jboss.forge.maven.plugins.PluginElement;
+import org.jboss.forge.parser.JavaParser;
+import org.jboss.forge.parser.java.Field;
+import org.jboss.forge.parser.java.JavaClass;
+import org.jboss.forge.parser.java.Method;
 import org.jboss.forge.parser.xml.Node;
 import org.jboss.forge.parser.xml.XMLParser;
-import org.jboss.forge.project.Project;
+import org.jboss.forge.project.dependencies.DependencyBuilder;
+import org.jboss.forge.project.facets.DependencyFacet;
 import org.jboss.forge.project.facets.JavaSourceFacet;
 import org.jboss.forge.project.facets.ResourceFacet;
 import org.jboss.forge.project.facets.events.InstallFacets;
 import org.jboss.forge.resources.FileResource;
-import org.jboss.forge.shell.Shell;
+import org.jboss.forge.resources.Resource;
+import org.jboss.forge.resources.java.JavaResource;
+import org.jboss.forge.shell.PromptType;
 import org.jboss.forge.shell.ShellMessages;
+import org.jboss.forge.shell.events.PickupResource;
 import org.jboss.forge.shell.plugins.Alias;
 import org.jboss.forge.shell.plugins.Command;
 import org.jboss.forge.shell.plugins.Help;
 import org.jboss.forge.shell.plugins.Option;
 import org.jboss.forge.shell.plugins.PipeOut;
-import org.jboss.forge.shell.plugins.Plugin;
 import org.jboss.forge.shell.plugins.RequiresFacet;
 import org.jboss.forge.shell.plugins.RequiresProject;
 import org.jboss.forge.shell.plugins.SetupCommand;
@@ -28,33 +44,90 @@ import org.jboss.forge.shell.plugins.SetupCommand;
 @RequiresFacet({ JavaSourceFacet.class, ResourceFacet.class, BytemanFacet.class })
 @RequiresProject
 @Help("A plugin that helps manage the Arquillian Byteman extension")
-public class BytemanPlugin implements Plugin
+public class BytemanPlugin extends AbstractExtensionPlugin
 {
-	   @Inject
-	   private Project project;
 
-	   @Inject
-	   private Event<InstallFacets> request;
+	   private static final String PATH_TOOLS_JAR = "path.tools_jar";
 
-	   @SetupCommand
+
+      @SetupCommand
 	   public void setup(final PipeOut out)
 	   {
 
-	      if (!project.hasFacet(PortalFacet.class))
+	      DependencyFacet dependencyFacet = project.getFacet(DependencyFacet.class);
+
+	      if (!project.hasFacet(BytemanFacet.class))
 	      {
-	         request.fire(new InstallFacets(PortalFacet.class));
+	         request.fire(new InstallFacets(BytemanFacet.class));
 	      }
-	      if (project.hasFacet(PortalFacet.class))
+
+	      installToolsDotJar(dependencyFacet);
+	      
+	      if (project.hasFacet(BytemanFacet.class))
 	      {
-	         ShellMessages.success(out, "Arquillian Portal extension is installed.");
-	      }
+	         ShellMessages.success(out, "Arquillian Byteman extension is installed.");
+	      }	      
 	   }
 
-	   @Inject
-	   private Shell shell;
+
+      private void installToolsDotJar(DependencyFacet dependencyFacet)
+      {
+         String path_tools_jar = dependencyFacet.getProperty(PATH_TOOLS_JAR);
+	      if(path_tools_jar == null)
+	      {
+	         dependencyFacet.setProperty(PATH_TOOLS_JAR,"${java.home}/../lib/tools.jar");
+	      }
+	
+
+         MavenPluginFacet plugins = project.getFacet(MavenPluginFacet.class);
+         DependencyBuilder surefirePluginDep = DependencyBuilder.create("org.apache.maven.plugins:maven-surefire-plugin");
+
+         MavenPlugin plugin;
+         if (!plugins.hasPlugin(surefirePluginDep))
+         {
+            surefirePluginDep.setVersion("2.14.1");
+            plugin = MavenPluginBuilder.create().setDependency(surefirePluginDep);
+            plugins.addPlugin(plugin);
+         }
+         else
+         {
+            plugin = plugins.getPlugin(surefirePluginDep);
+         }
+
+         if (plugin.getConfig() == null)
+         {
+
+         }
+
+         if (!plugin.getConfig().hasConfigurationElement("systemPropertyVariables"))
+         {
+            ConfigurationElementBuilder configElement = ConfigurationElementBuilder.create().setName("systemPropertyVariables");
+            configElement.addChild(PATH_TOOLS_JAR).setText("${path.tools_jar}");
+            plugin.getConfig().addConfigurationElement(configElement);
+         }
+         else
+         {
+           ConfigurationElement configElementOld = plugin.getConfig().getConfigurationElement("systemPropertyVariables");
+           ConfigurationElementBuilder configElement = ConfigurationElementBuilder.create().setName("systemPropertyVariables");
+           for (PluginElement element : configElementOld.getChildren())
+           {
+              if(!(element instanceof ConfigurationElement) || !PATH_TOOLS_JAR.equals(((ConfigurationElement)element).getName()))
+              {
+                    configElement.addChild(element);
+              }
+           }
+           configElement.addChild(PATH_TOOLS_JAR).setText("${path.tools_jar}");
+           plugin.getConfig().removeConfigurationElement("systemPropertyVariables");
+           plugin.getConfig().addConfigurationElement(configElement);           
+         }
+
+         plugins.removePlugin(surefirePluginDep);
+         plugins.addPlugin(plugin);
+      }
+
 
 	   @Command(value = "configure")
-	   public void configureWebdriver(
+	   public void configure(
 	            @Option(name = "autoInstallAgent",
 	                     description = "If true the extension will attempt to install the Byteman Agent in the target Container runtime. If false it assumes the Byteman Agent is manually installed. autoInstallAgent requires tools.jar on the container classpath to perform the installation.",
 	                     defaultValue = "false") final boolean autoInstallAgent,
@@ -77,26 +150,78 @@ public class BytemanPlugin implements Plugin
 	      {
 	         xml = XMLParser.parse(resource.getResourceInputStream());
 	      }
-	      addPropertyToArquillianConfig(xml, "webdriver", "autoInstallAgent", Boolean.toString(autoInstallAgent));
-	      addPropertyToArquillianConfig(xml, "webdriver", "agentProperties", agentProperties);
+	      addPropertyToArquillianConfig(xml, "byteman", "autoInstallAgent", Boolean.toString(autoInstallAgent));
+	      addPropertyToArquillianConfig(xml, "byteman", "agentProperties", agentProperties);
 	      resource.setContents(XMLParser.toXMLString(xml));
 	   }
 
 
-	   private void addPropertyToArquillianConfig(Node xml, String qualifier, String key, String value)
+	   @Command(value = "create-test", help = "Create a new test class with a default @Deployment method")
+	   public void createTest(
+	            @Option(required = false,
+	                     help = "the package in which to build this test class",
+	                     description = "source package",
+	                     type = PromptType.JAVA_PACKAGE,
+	                     name = "package") final String packageName,
+	            @Option(required = true, name = "named", help = "the test class name") String name,
+	            final PipeOut out)
+	            throws Exception
 	   {
-	      if (value != null)
+	      if (!name.endsWith("Test"))
 	      {
-	         xml.getOrCreate("extension@qualifier=" + qualifier)
-	                  .getOrCreate("property@name=" + key)
-	                  .text(value);
+	         name = name + "Test";
+	      }
+
+	      String testPackage;
+
+	      JavaSourceFacet java = project.getFacet(JavaSourceFacet.class);
+	      ResourceFacet resource = project.getFacet(ResourceFacet.class);
+
+	      if ((packageName != null) && !"".equals(packageName))
+	      {
+	         testPackage = packageName;
+	      }
+	      else if (getPackagePortionOfCurrentDirectory() != null)
+	      {
+	         testPackage = getPackagePortionOfCurrentDirectory();
 	      }
 	      else
 	      {
-	         if (xml.getOrCreate("extension@qualifier=" + qualifier).getSingle("property@name=" + key) != null)
-	         {
-	            xml.getOrCreate("extension@qualifier=" + qualifier).removeChild("property@name=" + key);
-	         }
+	         testPackage = shell.promptCommon(
+	                  "In which package you'd like to create this Test class, or enter for default",
+	                  PromptType.JAVA_PACKAGE, java.getBasePackage());
 	      }
+	      
+	      JavaClass testClass = JavaParser.create(JavaClass.class).setName(name).setPackage(testPackage);
+	      testClass.addImport("java.net.URL");
+	      testClass.addImport("org.jboss.arquillian.container.test.api.Deployment");
+	      testClass.addImport("org.jboss.arquillian.extension.byteman.api.BMRule");
+	      testClass.addImport("org.jboss.arquillian.junit.Arquillian");
+	      testClass.addImport("org.jboss.shrinkwrap.api.ShrinkWrap");
+	      testClass.addImport("org.jboss.shrinkwrap.api.asset.EmptyAsset");
+	      testClass.addImport("org.jboss.shrinkwrap.api.spec.JavaArchive");
+	      testClass.addImport("org.junit.Test");
+	      testClass.addImport("org.junit.runner.RunWith");
+
+	      testClass.addAnnotation("RunWith").setLiteralValue("Arquillian.class");
+
+	      Method<JavaClass> createDeployment = testClass.addMethod().setName("createDeployment").setStatic(true)
+	               .setPublic();
+	      createDeployment.setReturnType("JavaArchive");
+	      StringBuilder body = new StringBuilder();
+
+	      body.append("return ShrinkWrap.create(JavaArchive.class,\"").append(name.toLowerCase()).append(".jar\");");
+	      createDeployment.setBody(body.toString());
+
+	      Method<JavaClass> testThrowRule = testClass.addMethod().setName("testThrowRule").setStatic(false).setPublic();
+	      testThrowRule.addAnnotation("Test").setLiteralValue("expected", "RuntimeException.class");
+         testThrowRule.addAnnotation("BMRule").setStringValue("name", "Throw exception on success").setStringValue("targetClass","Long").setStringValue("targetMethod", "parseLong").setStringValue("action","throw new java.lang.RuntimeException()");
+         testThrowRule.setBody("Long.parseLong(\"1234\");");
+         
+         JavaResource javaFileLocation = java.saveTestJavaSource(testClass);
+
+	      shell.println("Created Test [" + testClass.getQualifiedName() + "]");
+	      pickup.fire(new PickupResource(javaFileLocation));
 	   }
+
 }
