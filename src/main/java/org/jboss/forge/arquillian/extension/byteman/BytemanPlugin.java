@@ -180,13 +180,12 @@ public class BytemanPlugin extends AbstractExtensionPlugin
       }
 
       JavaClass testClass = JavaParser.create(JavaClass.class).setName(name).setPackage(testPackage);
-      testClass.addImport("java.net.URL");
       testClass.addImport("org.jboss.arquillian.container.test.api.Deployment");
       testClass.addImport("org.jboss.arquillian.extension.byteman.api.BMRule");
       testClass.addImport("org.jboss.arquillian.junit.Arquillian");
       testClass.addImport("org.jboss.shrinkwrap.api.ShrinkWrap");
-      testClass.addImport("org.jboss.shrinkwrap.api.asset.EmptyAsset");
       testClass.addImport("org.jboss.shrinkwrap.api.spec.JavaArchive");
+      testClass.addImport("org.junit.Assert");
       testClass.addImport("org.junit.Test");
       testClass.addImport("org.junit.runner.RunWith");
 
@@ -194,6 +193,7 @@ public class BytemanPlugin extends AbstractExtensionPlugin
 
       Method<JavaClass> createDeployment = testClass.addMethod().setName("createDeployment").setStatic(true)
                .setPublic();
+      createDeployment.addAnnotation("Deployment");
       createDeployment.setReturnType("JavaArchive");
       StringBuilder body = new StringBuilder();
 
@@ -203,10 +203,23 @@ public class BytemanPlugin extends AbstractExtensionPlugin
       Method<JavaClass> testThrowRule = testClass.addMethod().setName("testThrowRule").setStatic(false).setPublic();
       testThrowRule.addAnnotation("Test").setLiteralValue("expected", "RuntimeException.class");
       testThrowRule.addAnnotation("BMRule").setStringValue("name", "Throw exception on success")
-               .setStringValue("targetClass", "Long").setStringValue("targetMethod", "parseLong")
+               .setStringValue("targetClass", name).setStringValue("targetMethod", "calc")
                .setStringValue("action", "throw new java.lang.RuntimeException()");
-      testThrowRule.setBody("Long.parseLong(\"1234\");");
+      testThrowRule.setBody("calc(1, 2);");
 
+
+      Method<JavaClass> testChangeReturn = testClass.addMethod().setName("testChangeReturn").setStatic(false).setPublic();
+      testChangeReturn.addAnnotation("Test");
+      testChangeReturn.addAnnotation("BMRule").setStringValue("name", "Change result")
+               .setStringValue("targetClass", name).setStringValue("targetMethod", "calc")
+               .setStringValue("action", "return 4");
+      testChangeReturn.setBody("Assert.assertEquals(4,calc(1, 2));");
+            
+      Method<JavaClass> calc = testClass.addMethod().setName("calc").setStatic(false).setPublic();
+      calc.setParameters("long l1, long l2");
+      calc.setReturnType(Long.TYPE);
+      calc.setBody("return l1 + l2;");
+      
       JavaResource javaFileLocation = java.saveTestJavaSource(testClass);
 
       shell.println("Created Test [" + testClass.getQualifiedName() + "]");
