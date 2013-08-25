@@ -5,8 +5,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import org.jboss.forge.arquillian.ArquillianExtensionFacet;
-import org.jboss.forge.arquillian.extension.graphene.GrapheneFacet;
+import org.jboss.forge.arquillian.extension.ArquillianExtensionFacet;
 import org.jboss.forge.project.dependencies.Dependency;
 import org.jboss.forge.project.dependencies.DependencyBuilder;
 import org.jboss.forge.project.dependencies.DependencyInstaller;

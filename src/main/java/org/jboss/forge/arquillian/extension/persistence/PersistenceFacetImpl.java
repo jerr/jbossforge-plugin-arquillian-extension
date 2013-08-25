@@ -1,29 +1,19 @@
 package org.jboss.forge.arquillian.extension.persistence;
 
-import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Inject;
 
-import org.jboss.forge.arquillian.ArquillianExtensionFacet;
+import org.jboss.forge.arquillian.extension.ArquillianExtensionFacet;
 import org.jboss.forge.project.dependencies.Dependency;
 import org.jboss.forge.project.dependencies.DependencyBuilder;
 import org.jboss.forge.project.dependencies.DependencyInstaller;
-import org.jboss.forge.project.facets.MetadataFacet;
 import org.jboss.forge.project.facets.ResourceFacet;
-import org.jboss.forge.project.facets.WebResourceFacet;
 import org.jboss.forge.resources.DirectoryResource;
-import org.jboss.forge.resources.FileResource;
 import org.jboss.forge.resources.Resource;
 import org.jboss.forge.resources.ResourceFilter;
-import org.jboss.forge.resources.UnknownFileResource;
 import org.jboss.forge.shell.Shell;
-import org.jboss.forge.shell.util.Streams;
-import org.jboss.shrinkwrap.descriptor.api.Descriptors;
-import org.jboss.shrinkwrap.descriptor.api.spec.servlet.web.WebAppDescriptor;
 
 /**
  * @author Jérémie Lagarde

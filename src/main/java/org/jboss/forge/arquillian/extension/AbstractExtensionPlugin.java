@@ -9,13 +9,9 @@ import org.jboss.forge.project.facets.JavaSourceFacet;
 import org.jboss.forge.project.facets.events.InstallFacets;
 import org.jboss.forge.resources.DirectoryResource;
 import org.jboss.forge.resources.Resource;
-import org.jboss.forge.shell.PromptType;
 import org.jboss.forge.shell.Shell;
 import org.jboss.forge.shell.events.PickupResource;
-import org.jboss.forge.shell.plugins.Command;
 import org.jboss.forge.shell.plugins.Current;
-import org.jboss.forge.shell.plugins.Option;
-import org.jboss.forge.shell.plugins.PipeOut;
 import org.jboss.forge.shell.plugins.Plugin;
 import org.jboss.forge.shell.util.ResourceUtil;
 

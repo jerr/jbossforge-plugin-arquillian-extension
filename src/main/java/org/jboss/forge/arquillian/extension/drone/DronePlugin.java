@@ -3,9 +3,6 @@ package org.jboss.forge.arquillian.extension.drone;
 import java.net.URL;
 import java.util.List;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-
 import org.jboss.forge.arquillian.extension.AbstractExtensionPlugin;
 import org.jboss.forge.parser.JavaParser;
 import org.jboss.forge.parser.java.Field;
@@ -13,29 +10,23 @@ import org.jboss.forge.parser.java.JavaClass;
 import org.jboss.forge.parser.java.Method;
 import org.jboss.forge.parser.xml.Node;
 import org.jboss.forge.parser.xml.XMLParser;
-import org.jboss.forge.project.Project;
 import org.jboss.forge.project.facets.JavaSourceFacet;
 import org.jboss.forge.project.facets.ResourceFacet;
 import org.jboss.forge.project.facets.events.InstallFacets;
-import org.jboss.forge.resources.DirectoryResource;
 import org.jboss.forge.resources.FileResource;
 import org.jboss.forge.resources.Resource;
 import org.jboss.forge.resources.java.JavaResource;
 import org.jboss.forge.shell.PromptType;
-import org.jboss.forge.shell.Shell;
 import org.jboss.forge.shell.ShellMessages;
 import org.jboss.forge.shell.events.PickupResource;
 import org.jboss.forge.shell.plugins.Alias;
 import org.jboss.forge.shell.plugins.Command;
-import org.jboss.forge.shell.plugins.Current;
 import org.jboss.forge.shell.plugins.Help;
 import org.jboss.forge.shell.plugins.Option;
 import org.jboss.forge.shell.plugins.PipeOut;
-import org.jboss.forge.shell.plugins.Plugin;
 import org.jboss.forge.shell.plugins.RequiresFacet;
 import org.jboss.forge.shell.plugins.RequiresProject;
 import org.jboss.forge.shell.plugins.SetupCommand;
-import org.jboss.forge.shell.util.ResourceUtil;
 
 /**
  * @author Jérémie Lagarde
